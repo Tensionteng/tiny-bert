@@ -20,7 +20,7 @@ class Exp_Long_Term_Forecast(Exp_Basic):
         # Pre-compute PCA components before model initialization
         if getattr(args, "pca_components", None) is None:
             train_set, _ = data_provider(args, flag="train")
-            args.pca_components = getattr(train_set, "pca_components", None)
+            args.cov_matrix = getattr(train_set, "_cov_matrix", None)
             del train_set  # Free memory
         super(Exp_Long_Term_Forecast, self).__init__(args)
 

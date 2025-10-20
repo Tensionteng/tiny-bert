@@ -58,8 +58,7 @@ class Dataset_ETT_hour(Dataset):
 
         self.root_path = root_path
         self.data_path = data_path
-        self.m_components = m_components
-        self.pca_components = None
+        self._cov_matrix = None
         self.__read_data__()
 
     def __read_data__(self):
@@ -88,14 +87,13 @@ class Dataset_ETT_hour(Dataset):
         if self.scale:
             train_data = df_data[border1s[0] : border2s[0]]
             self.scaler.fit(train_data.values)
-            if self.set_type == 0:  # type_map['train'] is 0
-                self.pca_components = get_pca_components(
-                    self.scaler, train_data, self.m_components
-                )
-
             data = self.scaler.transform(df_data.values)
         else:
             data = df_data.values
+
+        # Compute covariance matrix for training data
+        train_data_scaled = data[border1s[0]:border2s[0]]
+        self._cov_matrix = np.cov(train_data_scaled, rowvar=False)
 
         df_stamp = df_raw[["date"]][border1:border2]
         df_stamp["date"] = pd.to_datetime(df_stamp.date)
@@ -212,6 +210,10 @@ class Dataset_ETT_minute(Dataset):
         else:
             data = df_data.values
 
+        # Compute covariance matrix for training data
+        train_data_scaled = data[border1s[0]:border2s[0]]
+        self._cov_matrix = np.cov(train_data_scaled, rowvar=False)
+
         df_stamp = df_raw[["date"]][border1:border2]
         df_stamp["date"] = pd.to_datetime(df_stamp.date)
         if self.timeenc == 0:
@@ -297,6 +299,7 @@ class Dataset_Custom(Dataset):
 
         self.root_path = root_path
         self.data_path = data_path
+        self._cov_matrix = None
         self.__read_data__()
 
     def __read_data__(self):
@@ -330,6 +333,10 @@ class Dataset_Custom(Dataset):
             data = self.scaler.transform(df_data.values)
         else:
             data = df_data.values
+
+        # Compute covariance matrix for training data
+        train_data_scaled = data[border1s[0]:border2s[0]]
+        self._cov_matrix = np.cov(train_data_scaled, rowvar=False)
 
         df_stamp = df_raw[["date"]][border1:border2]
         df_stamp["date"] = pd.to_datetime(df_stamp.date)
