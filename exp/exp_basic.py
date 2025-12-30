@@ -31,6 +31,7 @@ from models import (
     WPMixer,
     MultiPatchFormer,
     Timesbert,
+    TimesbertGate,
 )
 
 
@@ -68,6 +69,7 @@ class Exp_Basic(object):
             "WPMixer": WPMixer,
             "MultiPatchFormer": MultiPatchFormer,
             "Timesbert": Timesbert,
+            "TimesbertGate": TimesbertGate,
         }
         if args.model == "Mamba":
             print("Please make sure you have successfully installed mamba_ssm")

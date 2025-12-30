@@ -112,6 +112,14 @@ class Model(nn.Module):
             self.max_chunk_size = 1024
 
     def forward(self, x, x_mark_enc, x_dec, x_mark_dec):
+        # ========== Normalization (from iTransformer) ==========
+        means = x.mean(1, keepdim=True).detach()
+        x = x - means
+        stdev = torch.sqrt(torch.var(x, dim=1, keepdim=True, unbiased=False) + 1e-5)
+        x = x / stdev
+        
+        _, _, N = x.shape  # N = num_features
+        
         x = x.permute(0, 2, 1)  # (B, T, F) -> (B, F, T)
         x = self.fc(x)  # (B, F, hidden)
 
@@ -121,7 +129,12 @@ class Model(nn.Module):
             bert_output = self.bert(inputs_embeds=chunk).last_hidden_state  # (B, chunk_len, hidden)
             chunked_outputs.append(bert_output)
 
-        bert_output = torch.cat(chunked_outputs, dim=1)  # (B, T, hidden)
+        bert_output = torch.cat(chunked_outputs, dim=1)  # (B, F, hidden)
         proj_output = self.proj(bert_output)  # (B, F, pred_len)
         output = proj_output.transpose(1, 2)  # (B, pred_len, F)
+        
+        # ========== De-Normalization ==========
+        output = output * stdev[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1)
+        output = output + means[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1)
+        
         return output
